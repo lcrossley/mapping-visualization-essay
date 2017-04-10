@@ -5,9 +5,6 @@ date: "4/10/2017"
 output: html_document
 ---
 
-```{r setup, echo = FALSE, include=FALSE, message=FALSE, quiet = TRUE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 This is my second visualization essay for Clio 2.
 
