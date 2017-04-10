@@ -1,12 +1,15 @@
 ---
-title: "README"
+title: "README for Mapping Visualization Essay"
 author: "Laura Crossley"
-date: "4/4/2017"
+date: "4/10/2017"
 output: html_document
 ---
 
-```{r setup, include=FALSE, message=FALSE}
+```{r setup, echo = FALSE, include=FALSE, message=FALSE, quiet = TRUE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 This is my second visualization essay for Clio 2.
+
+- [R Markdown](02-vis-essay.Rmd)
+- [HTML](02-vis-essay.html)
