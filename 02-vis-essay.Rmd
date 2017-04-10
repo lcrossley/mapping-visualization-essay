@@ -5,6 +5,113 @@ date: "4/4/2017"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include = FALSE, message = FALSE, quiet = TRUE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+```{r echo = FALSE, message = FALSE, quiet = TRUE}
+library(sf)
+library(leaflet)
+library(tidyverse)
+```
+
+I am interested in urban Native American history in the late nineteenth century. This is something I have only studied on the level of individual cities and individual people, so I was very curious what I would find. However, I quickly discovered some difficulties in creating visualizations that would allow me to see the Native presence in urban areas.^[Note that tis exploration does not begin to deal with questions of the "authenticity" of census data.] Creating a basic map of the number of people per county who marked "Indian" as their race in the 1890 census gives the map below. This map gives the impression that the Native presence outside reservations and the far West is negligible beyond a few pockets (Thurston County, NE; Knox County, NE; Neshoba County, MS; Swain County, NC; Emmet County, MI; Brown County, WI; Outagamie County, WI), none of which are locations of major urban centers. With the lightest color of the map representing every number from 0 to 500, there are a lot of Native people, including urban-dwelling Native people, rendered invisible by this map.
+
+```{r echo = FALSE, message = FALSE, quiet = TRUE, results = "hide"}
+
+states_1890 <- st_read("US_county_1890_conflated.shp", stringsAsFactors = FALSE)
+
+census_1890 <- read_csv("nhgis0008_csv/nhgis0008_ds27_1890_county.csv")
+
+states4 <- states_1890 %>% 
+  filter(!STATENAM %in% c("Alaska Territory", "Hawaii Territory")) %>% 
+  st_transform(4326)
+
+states_with_data_1890 <- states4 %>% 
+  left_join(census_1890, by = "GISJOIN")
+
+census_pal <- colorBin("Purples",
+                       domain = states_with_data_1890$AVF010,
+                       bins = 7, na.color = "#808080")
+```
+```{r echo = FALSE, message = FALSE, quiet = TRUE}
+leaflet(states_with_data_1890) %>% 
+  addTiles() %>% 
+  addPolygons(fillColor = ~census_pal(AVF010),
+              fillOpacity = 1,
+              color = "black",
+              opacity = 1,
+              weight = 1,
+              label = ~paste(NHGISNAM, ": ", AVF010)) %>% 
+  addLegend("bottomright", pal = census_pal,
+            values = ~AVF010, opacity = 1,
+            title = "1890 Indian Population")
+```
+
+Thinking that taking out the places with the largest populations should reveal a finer grained view of population levels, I removed every state/territory west of the Dakotas, Nebraska, Kansas, and Texas (as well as Thurston County, NE, because the county's Native population of 1,898 was almost 1,000 more than the next highest number for any other county, making a finer grained view impossible). This did not change the map much, though, because almost every county still fell within a range of 0-200 people who marked their race as "Indian." I have learned to be deeply skeptical of quantifying Native Americans within the population not only because of the ways that quantification has been used as a colonial tool against the sovereignty of Native nations but also because it is often not possible to speak in terms of large numbers of people when studying Native American history. Historical Native experiences should not be discounted just because of small numbers, especially because discounting urban Native Americans perpetuates the settler myth that Native people and cities are mutually exclusive, that one represents the past and the other the modern/the future.^[This is also why I chose not to create maps of Native people as percentages of the total population.]
+
+For this reason, I decided that a better way to visualize Native presence would be to filter out counties where zero people marked their race as "Indian." This is not exactly a map fit for publication, but this map does make it immediately clear that there is still a Native presence in the Eastern half of the United States where settler memory has attempted to erase their continued presence. It is also now clear that there were people identifying as Indian in the counties of all of the top 25 most populous cities (three far western cities not counted because they are excluded from the current map): New York, Chicago, Philadelphia, Brooklyn, Boston, Baltimore, Cincinnati, Cleveland, Buffalo, New Orleans, Pittsburgh, Washington, Detroit, Milwaukee, Newark, Minneapolis, Jersey City, Louisville, Omaha, Rochester, St. Paul, Kansas City, Providence, Indianapolis, Allegheny City.^[https://www.census.gov/population/www/documentation/twps0027/tab12.txt] Only having county level data to work from, it is possible that some of these numbers come from people living in non-urban parts of the same county, but this is not likely the case for every person in every county, especially given the small size of many of these counties (particularly those of the largest cities). I was surprised to see the 258 figure for Philadelphia County, the largest for any of the major cities above. From what I can find, there has been little research on Native people in nineteenth- or twentieth-century Philadelphia.^[Interestingly, the number for Philadelphia in 1880 (see third map) is only 30. I would like to do some future research to see how the number jumped to 258 by 1890. Is there an error in the data or is there something else going on?]
+
+```{r echo = FALSE, message = FALSE, quiet = TRUE}
+
+
+states_with_data_1890 <- states4 %>% 
+  left_join(census_1890, by = "GISJOIN") %>%
+  filter(!STATENAM %in% c("California", "Arizona Territory", "New Mexico Territory", "Utah Territory", "Colorado", "Wyoming Territory", "Wyoming", "Washington", "Oregon", "Montana", "Idaho", "Nevada")) %>%
+  filter(NHGISNAM != "Thurston") %>%
+  filter(AVF010 > 0)
+# %>% filter(AVF010 < 200)
+
+census_pal <- colorBin("Purples",
+                       domain = states_with_data_1890$AVF010,
+                       bins = 5, na.color = "#808080")
+
+leaflet(states_with_data_1890) %>% 
+  addTiles() %>% 
+  addPolygons(fillColor = ~census_pal(AVF010),
+              fillOpacity = .8,
+              color = "black",
+              opacity = 1,
+              weight = 1,
+              label = ~paste(NHGISNAM, ": ", AVF010)) %>% 
+  addLegend("bottomright", pal = census_pal,
+            values = ~AVF010, opacity = 1,
+            title = "1890 Indian Population")
+
+```
+
+Finally, I created a similar map for 1880 to compare. This time, checking the counties of the top 25 most populous cities in the Eastern half of the United States for 1880 revealed five with zero people who identified as Indian (Pittsburgh, Washington, Milwaukee, Allegheny City, and Richmond).^[https://www.census.gov/population/www/documentation/twps0027/tab11.txt] That there were no cities like this by 1890 demonstrates that Native American urbanization was taking place, even if not at the same scale as the country as a whole.
+
+```{r echo = FALSE, message = FALSE, quiet = TRUE, results = "hide"}
+states_1880 <- st_read("US_county_1880_conflated.shp", stringsAsFactors = FALSE)
+
+census_1880 <- read_csv("nhgis0005_csv/nhgis0005_ds23_1880_county.csv")
+
+states2 <- states_1880 %>% 
+  filter(!STATENAM %in% c("Alaska Territory", "Hawaii Territory")) %>% 
+  st_transform(4326)
+
+states_with_data_1880 <- states2 %>% 
+  left_join(census_1880, by = "GISJOIN") %>%
+  filter(!STATENAM %in% c("California", "Arizona Territory", "New Mexico Territory", "Utah Territory", "Colorado Territory", "Wyoming Territory", "Wyoming", "Washington Territory", "Oregon", "Montana Territory", "Idaho Territory", "Nevada")) %>%
+  filter(NHGISNAM != "Thurston") %>%
+  filter(APP004 > 0)
+
+census_pal <- colorBin("Purples",
+                       domain = states_with_data_1880$APP004,
+                       bins = 7, na.color = "#808080")
+```
+```{r echo = FALSE, message = FALSE, quiet = TRUE}
+leaflet(states_with_data_1880) %>% 
+  addTiles() %>% 
+  addPolygons(fillColor = ~census_pal(APP004),
+              fillOpacity = .8,
+              color = "black",
+              opacity = 1,
+              weight = 1,
+              label = ~paste(NHGISNAM, ": ", APP004)) %>% 
+  addLegend("bottomright", pal = census_pal,
+            values = ~APP004, opacity = 1,
+            title = "1880 Indian Population")
+```
+
